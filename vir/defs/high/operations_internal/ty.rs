@@ -111,6 +111,19 @@ impl super::super::ast::type_decl::Enum {
     }
 }
 
+impl super::super::ast::type_decl::Union {
+    pub fn get_discriminant(&self, variant_index: &VariantIndex) -> Option<&Expression> {
+        self.iter_discriminant_variants()
+            .find(|(_, variant)| variant_index.as_ref() == variant.name)
+            .map(|(discriminant, _)| discriminant)
+    }
+    pub fn iter_discriminant_variants(
+        &self,
+    ) -> impl Iterator<Item = (&Expression, &super::super::ast::type_decl::Struct)> {
+        self.discriminant_values.iter().zip(&self.variants)
+    }
+}
+
 pub trait Generic {
     #[must_use]
     fn substitute_types(self, substs: &FxHashMap<TypeVar, Type>) -> Self;

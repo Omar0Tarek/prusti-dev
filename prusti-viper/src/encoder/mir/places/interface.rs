@@ -205,10 +205,16 @@ impl<'v, 'tcx: 'v> PlacesEncoderInterface<'tcx> for super::super::super::Encoder
                     if parent_type.is_union() {
                         // We treat union fields as variants.
                         let union_decl = self.encode_type_def(&parent_type)?.unwrap_union();
-                        let variant_index = union_decl.variants[field.index()].name.clone().into();
-                        vir_high::Expression::variant_no_pos(expr, variant_index, ty)
+                        let variant = &union_decl.variants[field.index()];
+                        let variant_index: vir_high::ty::VariantIndex = variant.name.clone().into();
+                        let variant_type = parent_type.variant(variant_index.clone());
+                        let variant_expression =
+                            vir_high::Expression::variant_no_pos(expr, variant_index, variant_type);
+                        let encoded_field = variant.fields[0].clone();
+                        variant_expression.field_no_pos(encoded_field)
                     } else {
-                        let encoded_field = self.encode_field(&parent_type, field).with_span(span)?;
+                        let encoded_field =
+                            self.encode_field(&parent_type, field).with_span(span)?;
                         expr.field_no_pos(encoded_field)
                     }
                 }
