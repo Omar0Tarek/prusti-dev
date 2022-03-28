@@ -119,6 +119,14 @@ impl PredicateState {
         })
     }
 
+    pub(super) fn get_all_with_prefix<'a>(
+        &'a self,
+        kind: PermissionKind,
+        prefix: &'a vir_high::Expression,
+    ) -> impl Iterator<Item = &'a vir_high::Expression> {
+        self.places(kind).iter().filter(|p| p.has_prefix(prefix))
+    }
+
     pub(super) fn contains_prefix_of(
         &self,
         kind: PermissionKind,

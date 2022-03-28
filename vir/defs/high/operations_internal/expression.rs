@@ -61,6 +61,23 @@ impl Expression {
             expr => unreachable!("{}", expr),
         }
     }
+    pub fn iter_prefixes(&self) -> impl Iterator<Item = &Expression> {
+        struct PrefixIterator<'a> {
+            expr: Option<&'a Expression>,
+        }
+        impl<'a> Iterator for PrefixIterator<'a> {
+            type Item = &'a Expression;
+            fn next(&mut self) -> Option<Self::Item> {
+                if let Some(current) = self.expr.take() {
+                    self.expr = current.get_parent_ref();
+                    Some(current)
+                } else {
+                    None
+                }
+            }
+        }
+        PrefixIterator { expr: Some(self) }
+    }
     pub fn is_place(&self) -> bool {
         match self {
             Expression::Local(_) => true,

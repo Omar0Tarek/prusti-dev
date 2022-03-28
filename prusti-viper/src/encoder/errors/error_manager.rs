@@ -131,6 +131,10 @@ impl<'tcx> ErrorManager<'tcx> {
         }
     }
 
+    pub fn position_manager(&self) -> &PositionManager {
+        &self.position_manager
+    }
+
     /// Register a new VIR position.
     pub fn register_span<T: Into<MultiSpan>>(&mut self, def_id: ProcedureDefId, span: T) -> Position {
         self.position_manager.register_span(def_id, span)

@@ -453,18 +453,20 @@ impl<'p, 'v: 'p, 'tcx: 'v> ProcedureEncoder<'p, 'v, 'tcx> {
         match operand {
             mir::Operand::Move(source) => {
                 let encoded_source = self.encoder.encode_place_high(self.mir, *source)?;
+                let position = self.register_error(location, ErrorCtxt::MovePlace);
                 block_builder.add_statement(vir_high::Statement::move_place(
-                    encoded_target,
-                    encoded_source,
-                    self.register_error(location, ErrorCtxt::MovePlace),
+                    encoded_target.set_default_position(position),
+                    encoded_source.set_default_position(position),
+                    position,
                 ));
             }
             mir::Operand::Copy(source) => {
                 let encoded_source = self.encoder.encode_place_high(self.mir, *source)?;
+                let position = self.register_error(location, ErrorCtxt::CopyPlace);
                 block_builder.add_statement(vir_high::Statement::copy_place(
-                    encoded_target,
-                    encoded_source,
-                    self.register_error(location, ErrorCtxt::CopyPlace),
+                    encoded_target.set_default_position(position),
+                    encoded_source.set_default_position(position),
+                    position,
                 ));
             }
             mir::Operand::Constant(constant) => {
@@ -472,10 +474,11 @@ impl<'p, 'v: 'p, 'tcx: 'v> ProcedureEncoder<'p, 'v, 'tcx> {
                     .encoder
                     .encode_constant_high(constant)
                     .with_span(span)?;
+                let position = self.register_error(location, ErrorCtxt::WritePlace);
                 block_builder.add_statement(vir_high::Statement::write_place(
-                    encoded_target,
-                    encoded_constant,
-                    self.register_error(location, ErrorCtxt::WritePlace),
+                    encoded_target.set_default_position(position),
+                    encoded_constant.set_default_position(position),
+                    position,
                 ));
             }
         }
@@ -490,18 +493,28 @@ impl<'p, 'v: 'p, 'tcx: 'v> ProcedureEncoder<'p, 'v, 'tcx> {
         let span = self.encoder.get_span_of_location(self.mir, location);
         let encoded_operand = match operand {
             mir::Operand::Move(source) => {
-                let encoded_source = self.encoder.encode_place_high(self.mir, *source)?;
+                let position = self.register_error(location, ErrorCtxt::MovePlace);
+                let encoded_source = self
+                    .encoder
+                    .encode_place_high(self.mir, *source)?
+                    .set_default_position(position);
                 vir_high::Operand::new(vir_high::OperandKind::Move, encoded_source)
             }
             mir::Operand::Copy(source) => {
-                let encoded_source = self.encoder.encode_place_high(self.mir, *source)?;
+                let position = self.register_error(location, ErrorCtxt::CopyPlace);
+                let encoded_source = self
+                    .encoder
+                    .encode_place_high(self.mir, *source)?
+                    .set_default_position(position);
                 vir_high::Operand::new(vir_high::OperandKind::Copy, encoded_source)
             }
             mir::Operand::Constant(constant) => {
+                let position = self.register_error(location, ErrorCtxt::WritePlace);
                 let encoded_constant = self
                     .encoder
                     .encode_constant_high(constant)
-                    .with_span(span)?;
+                    .with_span(span)?
+                    .set_default_position(position);
                 vir_high::Operand::new(vir_high::OperandKind::Constant, encoded_constant)
             }
         };
