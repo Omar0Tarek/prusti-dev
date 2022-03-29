@@ -114,6 +114,10 @@ pub enum ErrorCtxt {
     TypeCast,
     /// A Viper `assert false` that encodes an unsupported feature
     Unsupported(String),
+    /// Failed to obtain capability by unfolding.
+    Unfold,
+    /// Failed to obtain capability by unfolding an union variant.
+    UnfoldUnionVariant,
 }
 
 /// The error manager
@@ -121,6 +125,7 @@ pub enum ErrorCtxt {
 pub struct ErrorManager<'tcx> {
     position_manager: PositionManager<'tcx>,
     error_contexts: FxHashMap<u64, ErrorCtxt>,
+    inner_positions: FxHashMap<u64, Position>,
 }
 
 impl<'tcx> ErrorManager<'tcx> {
@@ -128,6 +133,7 @@ impl<'tcx> ErrorManager<'tcx> {
         ErrorManager {
             position_manager: PositionManager::new(codemap),
             error_contexts: FxHashMap::default(),
+            inner_positions: FxHashMap::default(),
         }
     }
 
@@ -162,6 +168,16 @@ impl<'tcx> ErrorManager<'tcx> {
             );
         }
         self.error_contexts.insert(pos.id(), error_ctxt);
+    }
+
+    /// Creates a new position with `error_ctxt` that is linked to `pos`. This
+    /// method is used for setting the surrounding context position of an
+    /// expression's position.
+    pub fn set_surrounding_error_context(&mut self, pos: Position, error_ctxt: ErrorCtxt) -> Position {
+        let surrounding_position = self.duplicate_position(pos);
+        self.set_error(surrounding_position, error_ctxt);
+        self.inner_positions.insert(surrounding_position.id(), pos);
+        surrounding_position
     }
 
     /// Register a new VIR position with the given ErrorCtxt.

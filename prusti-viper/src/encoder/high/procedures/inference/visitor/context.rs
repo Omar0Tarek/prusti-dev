@@ -1,5 +1,8 @@
 use super::{super::ensurer::ExpandedPermissionKind, Visitor};
-use crate::encoder::{errors::SpannedEncodingResult, mir::types::MirTypeEncoderInterface};
+use crate::encoder::{
+    errors::{ErrorCtxt, ErrorManager, SpannedEncodingResult},
+    mir::{errors::ErrorInterface, types::MirTypeEncoderInterface},
+};
 use vir_crate::high::{self as vir_high, operations::ty::Typed};
 
 impl<'p, 'v, 'tcx> super::super::ensurer::Context for Visitor<'p, 'v, 'tcx> {
@@ -73,5 +76,12 @@ impl<'p, 'v, 'tcx> super::super::ensurer::Context for Visitor<'p, 'v, 'tcx> {
             .position_manager()
             .get_span(position.into())
             .cloned()
+    }
+    fn change_error_context(
+        &mut self,
+        position: vir_high::Position,
+        error_ctxt: ErrorCtxt,
+    ) -> vir_high::Position {
+        self.encoder.change_error_context(position, error_ctxt)
     }
 }

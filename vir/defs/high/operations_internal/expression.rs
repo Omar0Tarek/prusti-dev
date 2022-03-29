@@ -275,6 +275,18 @@ impl Expression {
         }
         DefaultPositionReplacer { new_position }.fold_expression(self)
     }
+    #[must_use]
+    pub fn replace_position(self, new_position: Position) -> Self {
+        struct PositionReplacer {
+            new_position: Position,
+        }
+        impl ExpressionFolder for PositionReplacer {
+            fn fold_position(&mut self, _position: Position) -> Position {
+                self.new_position
+            }
+        }
+        PositionReplacer { new_position }.fold_expression(self)
+    }
     pub fn has_prefix(&self, potential_prefix: &Expression) -> bool {
         if self == potential_prefix {
             true

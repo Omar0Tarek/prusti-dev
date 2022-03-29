@@ -106,12 +106,12 @@ impl<'p, 'v: 'p, 'tcx: 'v> ProcedureEncoder<'p, 'v, 'tcx> {
             let parameter = self.encode_local(mir_arg)?;
             let alloc_statement = vir_high::Statement::inhale_no_pos(
                 vir_high::Predicate::owned_non_aliased_no_pos(parameter.clone().into()),
-            )
-            .set_default_position(
-                self.encoder
-                    .change_error_context(parameter.position, ErrorCtxt::UnexpectedStorageLive),
             );
-            allocation.push(alloc_statement);
+            allocation.push(self.encoder.set_statement_error_ctxt_from_position(
+                alloc_statement,
+                parameter.position,
+                ErrorCtxt::UnexpectedStorageLive,
+            )?);
             let mir_type = self.encoder.get_local_type(self.mir, mir_arg)?;
             let size = self.encoder.encode_type_size_expression(mir_type)?;
             let dealloc_statement = vir_high::Statement::exhale_no_pos(

@@ -4,7 +4,9 @@ use super::{
     state::PredicateState,
     FoldUnfoldState,
 };
-use crate::encoder::errors::{SpannedEncodingError, SpannedEncodingResult};
+use crate::encoder::errors::{
+    ErrorCtxt, ErrorManager, SpannedEncodingError, SpannedEncodingResult,
+};
 use log::debug;
 use vir_crate::{
     common::position::Positioned,
@@ -28,6 +30,11 @@ pub(in super::super) trait Context {
         guiding_place: &vir_high::Expression,
     ) -> SpannedEncodingResult<Vec<(ExpandedPermissionKind, vir_high::Expression)>>;
     fn get_span(&mut self, position: vir_high::Position) -> Option<rustc_span::MultiSpan>;
+    fn change_error_context(
+        &mut self,
+        position: vir_high::Position,
+        error_ctxt: ErrorCtxt,
+    ) -> vir_high::Position;
 }
 
 pub(in super::super) fn ensure_required_permissions(
@@ -171,6 +178,18 @@ fn ensure_permission_in_state(
         } else {
             None
         };
+        let position = {
+            let error_ctxt =
+                if let vir_high::Type::Union(vir_high::ty::Union { variant: None, .. }) =
+                    prefix.get_type()
+                {
+                    ErrorCtxt::UnfoldUnionVariant
+                } else {
+                    ErrorCtxt::Unfold
+                };
+            context.change_error_context(prefix.position(), error_ctxt)
+        };
+        let prefix = prefix.replace_position(position);
         actions.push(Action::unfold(permission_kind, prefix, enum_variant));
         for (kind, new_place) in expanded_place {
             debug!("  kind={:?} new_place={}", kind, new_place);

@@ -18,4 +18,9 @@ fn test2() {
     let _y = unsafe { a.f2 };   //~ ERROR: failed to obtain the required capability because a conflicting capability is present
 }
 
+fn test3() {
+    let a = MyUnion { f1: 1 };
+    let _y = unsafe { a.f2 };   //~ ERROR: failed to obtain the required capability because a conflicting capability is present
+}
+
 fn main() {}
